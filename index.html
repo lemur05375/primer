@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Арифметический Тренажёр</title>
+  <style>
+    body {
+      background: linear-gradient(to bottom right, #dbeafe, #fef9c3);
+      font-family: "Segoe UI", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      color: #1e3a8a;
+    }
+
+    .panel {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    select, input, button {
+      margin: 10px 0;
+      font-size: 1.2rem;
+      padding: 10px;
+      border-radius: 10px;
+      border: 2px solid #60a5fa;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    button {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background-color: #2563eb;
+    }
+
+    #task {
+      font-size: 2rem;
+      margin: 20px 0;
+      color: #111827;
+    }
+
+    #feedback {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .correct {
+      color: #10b981;
+    }
+
+    .wrong {
+      color: #ef4444;
+    }
+
+    .stats {
+      margin-top: 15px;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Реши пример</h1>
+  <div class="panel">
+    <label for="difficulty">Уровень сложности:</label>
+    <select id="difficulty" onchange="newTask()">
+      <option value="easy">Лёгкий</option>
+      <option value="medium">Средний</option>
+      <option value="hard">Сложный</option>
+    </select>
+    <div id="task">Загрузка...</div>
+    <input type="number" id="answer" placeholder="Ваш ответ" />
+    <button onclick="checkAnswer()">Проверить</button>
+    <div id="feedback"></div>
+    <div class="stats">
+      Очки: <span id="score">0</span> |
+      Время: <span id="time">30</span> сек
+    </div>
+  </div>
+
+  <audio id="rightSound" src="correct.mp3"></audio>
+  <audio id="wrongSound" src="wrong.mp3"></audio>
+
+  <script>
+    let a, b, correctAnswer, score = 0, timer;
+    let timeLeft = 30;
+
+    const taskElem = document.getElementById("task");
+    const answerInput = document.getElementById("answer");
+    const feedbackElem = document.getElementById("feedback");
+    const scoreElem = document.getElementById("score");
+    const timeElem = document.getElementById("time");
+    const rightSound = document.getElementById("rightSound");
+    const wrongSound = document.getElementById("wrongSound");
+
+    function getDifficultyRange() {
+      const level = document.getElementById("difficulty").value;
+      if (level === "easy") return [1, 10];
+      if (level === "medium") return [10, 50];
+      return [50, 100];
+    }
+
+    function newTask() {
+      const [min, max] = getDifficultyRange();
+      a = Math.floor(Math.random() * (max - min + 1)) + min;
+      b = Math.floor(Math.random() * (max - min + 1)) + min;
+      const ops = ['+', '-', '*'];
+      const op = ops[Math.floor(Math.random() * ops.length)];
+
+      if (op === '+') correctAnswer = a + b;
+      else if (op === '-') correctAnswer = a - b;
+      else correctAnswer = a * b;
+
+      taskElem.textContent = `${a} ${op} ${b} = ?`;
+      answerInput.value = '';
+      feedbackElem.textContent = '';
+      feedbackElem.className = '';
+      answerInput.focus();
+    }
+
+    function checkAnswer() {
+      const userAnswer = parseInt(answerInput.value, 10);
+
+      if (isNaN(userAnswer)) {
+        feedbackElem.textContent = "Пожалуйста, введите число!";
+        feedbackElem.className = "wrong";
+        return;
+      }
+
+      if (userAnswer === correctAnswer) {
+        score++;
+        scoreElem.textContent = score;
+        feedbackElem.textContent = "Верно!";
+        feedbackElem.className = "correct";
+        rightSound.play().catch(() => {});
+        setTimeout(newTask, 500);
+      } else {
+        feedbackElem.textContent = "Неверно!";
+        feedbackElem.className = "wrong";
+        wrongSound.play().catch(() => {});
+      }
+    }
+
+    function startTimer() {
+      if (timer) clearInterval(timer);
+      timeLeft = 30;
+      timeElem.textContent = timeLeft;
+
+      timer = setInterval(() => {
+        timeLeft--;
+        timeElem.textContent = timeLeft;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          alert("⏱️ Время вышло! Ваш счёт: " + score);
+          score = 0;
+          scoreElem.textContent = score;
+          newTask();
+          startTimer();
+        }
+      }, 1000);
+    }
+
+    newTask();
+    startTimer();
+  </script>
+</body>
+</html>
